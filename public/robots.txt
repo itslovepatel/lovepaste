@@ -1,0 +1,8 @@
+# LovePaste robots.txt
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /p/*/raw
+
+# Sitemap
+Sitemap: https://lovepaste.example.com/sitemap.xml
