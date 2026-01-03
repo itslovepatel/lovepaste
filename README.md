@@ -1,6 +1,7 @@
 # LovePaste ❤️
 
 A modern, minimal, and distraction-free paste sharing service built with Next.js 15, Tailwind CSS, and shadcn/ui.
+https://paste.lovexog.me/
 
 ## ✨ Features
 
