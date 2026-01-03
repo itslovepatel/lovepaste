@@ -1,5 +1,5 @@
-// In-memory store for development (replace with Supabase in production)
-// To use Supabase, set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local
+// Database layer that supports both Vercel KV (production) and in-memory (development)
+import { kv } from "@vercel/kv";
 
 interface Paste {
   id: string;
@@ -9,36 +9,28 @@ interface Paste {
   created_at: string;
 }
 
-// Security: Maximum number of pastes to store (prevents memory exhaustion)
-const MAX_PASTES = 10000;
+// Check if we're using Vercel KV (production) or in-memory (development)
+const useVercelKV = !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
 
-// Global in-memory store that persists across API calls
+// In-memory fallback for local development
 const globalForPastes = globalThis as unknown as { 
   pastes: Map<string, Paste>;
-  cleanupInterval?: NodeJS.Timeout;
 };
 const memoryStore = globalForPastes.pastes || new Map<string, Paste>();
 globalForPastes.pastes = memoryStore;
 
-// Periodic cleanup of expired pastes (runs every 5 minutes)
-if (!globalForPastes.cleanupInterval) {
-  globalForPastes.cleanupInterval = setInterval(() => {
-    cleanupExpiredPastes();
-  }, 5 * 60 * 1000);
-}
-
-function cleanupExpiredPastes(): void {
-  const now = new Date();
-  for (const [id, paste] of memoryStore.entries()) {
-    if (paste.expires_at && new Date(paste.expires_at) < now) {
-      memoryStore.delete(id);
-    }
-  }
-}
-
 // Validate paste ID format (only allowed characters)
 function isValidId(id: string): boolean {
   return /^[a-z2-9]{5}$/.test(id);
+}
+
+// Calculate TTL in seconds from expires_at date
+function getTTL(expires_at: string | null): number | undefined {
+  if (!expires_at) return undefined; // No expiration
+  const expiresDate = new Date(expires_at);
+  const now = new Date();
+  const ttlSeconds = Math.floor((expiresDate.getTime() - now.getTime()) / 1000);
+  return ttlSeconds > 0 ? ttlSeconds : 1; // Minimum 1 second
 }
 
 export async function createPaste(data: {
@@ -53,22 +45,6 @@ export async function createPaste(data: {
       return { success: false, error: "Invalid paste ID format" };
     }
 
-    // Security: Check if we've hit the maximum number of pastes
-    if (memoryStore.size >= MAX_PASTES) {
-      // Clean up expired pastes first
-      cleanupExpiredPastes();
-      
-      // If still at capacity, reject new pastes
-      if (memoryStore.size >= MAX_PASTES) {
-        return { success: false, error: "Storage limit reached. Please try again later." };
-      }
-    }
-
-    // Security: Check for ID collision
-    if (memoryStore.has(data.id)) {
-      return { success: false, error: "Paste ID already exists" };
-    }
-
     const paste: Paste = {
       id: data.id,
       content: data.content,
@@ -77,10 +53,33 @@ export async function createPaste(data: {
       created_at: new Date().toISOString(),
     };
 
-    memoryStore.set(data.id, paste);
+    if (useVercelKV) {
+      // Use Vercel KV in production
+      const key = `paste:${data.id}`;
+      const existing = await kv.get(key);
+      
+      if (existing) {
+        return { success: false, error: "Paste ID already exists" };
+      }
+
+      const ttl = getTTL(data.expires_at ?? null);
+      if (ttl) {
+        await kv.set(key, paste, { ex: ttl });
+      } else {
+        // No expiration - set for 30 days max to prevent indefinite storage
+        await kv.set(key, paste, { ex: 30 * 24 * 60 * 60 });
+      }
+    } else {
+      // Use in-memory store for development
+      if (memoryStore.has(data.id)) {
+        return { success: false, error: "Paste ID already exists" };
+      }
+      memoryStore.set(data.id, paste);
+    }
 
     return { success: true };
-  } catch {
+  } catch (error) {
+    console.error("Failed to create paste:", error);
     return { success: false, error: "Failed to create paste" };
   }
 }
@@ -92,32 +91,50 @@ export async function getPaste(id: string): Promise<Paste | null> {
       return null;
     }
 
-    const paste = memoryStore.get(id);
+    if (useVercelKV) {
+      // Use Vercel KV in production
+      const paste = await kv.get<Paste>(`paste:${id}`);
+      
+      if (!paste) return null;
 
-    if (!paste) return null;
+      // Check expiration (KV should auto-expire, but double-check)
+      if (paste.expires_at && new Date(paste.expires_at) < new Date()) {
+        await kv.del(`paste:${id}`);
+        return null;
+      }
 
-    // Check expiration
-    if (paste.expires_at && new Date(paste.expires_at) < new Date()) {
-      memoryStore.delete(id);
-      return null;
+      return paste;
+    } else {
+      // Use in-memory store for development
+      const paste = memoryStore.get(id);
+
+      if (!paste) return null;
+
+      // Check expiration
+      if (paste.expires_at && new Date(paste.expires_at) < new Date()) {
+        memoryStore.delete(id);
+        return null;
+      }
+
+      return paste;
     }
-
-    return paste;
-  } catch {
+  } catch (error) {
+    console.error("Failed to get paste:", error);
     return null;
   }
 }
 
-export async function getAllPastes(): Promise<Paste[]> {
-  const pastes = Array.from(memoryStore.values());
-  const now = new Date();
+export async function deletePaste(id: string): Promise<boolean> {
+  try {
+    if (!isValidId(id)) return false;
 
-  // Filter out expired pastes
-  return pastes.filter((paste) => {
-    if (paste.expires_at && new Date(paste.expires_at) < now) {
-      memoryStore.delete(paste.id);
-      return false;
+    if (useVercelKV) {
+      await kv.del(`paste:${id}`);
+    } else {
+      memoryStore.delete(id);
     }
     return true;
-  });
+  } catch {
+    return false;
+  }
 }
