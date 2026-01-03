@@ -13,9 +13,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LovePaste - Minimal Code & Text Sharing",
-  description: "A modern, distraction-free paste sharing service with syntax highlighting, expiration options, and one-click sharing.",
-  keywords: ["pastebin", "code sharing", "text sharing", "syntax highlighting", "code paste", "lovepaste"],
+  title: "LovePaste - Share Code Instantly",
+  description: "A simple and fast code sharing tool built by Love Patel.",
 };
 
 export default function RootLayout({
