@@ -123,3 +123,37 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Mobile optimizations */
+@layer utilities {
+  /* Prevent zoom on input focus on iOS */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+  
+  @media (min-width: 640px) {
+    input, select, textarea {
+      font-size: 14px !important;
+    }
+  }
+  
+  /* Better touch targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Smooth scrolling on mobile */
+  .scroll-touch {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Hide scrollbar but allow scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

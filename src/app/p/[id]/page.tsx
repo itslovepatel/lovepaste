@@ -36,19 +36,20 @@ export default async function PastePage({ params }: PastePageProps) {
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="border-b border-border/40 backdrop-blur-sm bg-background/80 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+        <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8">
+          {/* Main header row */}
+          <div className="flex justify-between items-center h-14 sm:h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg bg-rose-500 flex items-center justify-center group-hover:scale-105 group-hover:bg-rose-600 transition-all">
-                <span className="text-white font-bold text-sm">❤</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-rose-500 flex items-center justify-center group-hover:scale-105 group-hover:bg-rose-600 transition-all">
+                <span className="text-white font-bold text-xs sm:text-sm">❤</span>
               </div>
-              <span className="text-xl font-bold tracking-tight">LovePaste</span>
+              <span className="text-lg sm:text-xl font-bold tracking-tight">LovePaste</span>
             </Link>
 
-            {/* Actions */}
-            <div className="flex items-center gap-3">
-              <GoToPasteInput className="hidden sm:flex" />
+            {/* Desktop Actions */}
+            <div className="hidden sm:flex items-center gap-3">
+              <GoToPasteInput />
               <CopyButton text={paste.content} label="Copy Code" />
               <CopyButton text={`/p/${id}`} label="Copy Link" />
               <Link href={`/p/${id}/raw`}>
@@ -62,31 +63,52 @@ export default async function PastePage({ params }: PastePageProps) {
                 </span>
               </Link>
             </div>
+
+            {/* Mobile: New Paste Button */}
+            <div className="flex sm:hidden">
+              <Link href="/">
+                <span className="inline-flex items-center justify-center h-10 px-4 text-sm font-medium rounded-md bg-rose-500 text-white active:bg-rose-600 transition-colors">
+                  + New
+                </span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Mobile Actions Row */}
+          <div className="flex sm:hidden items-center gap-2 pb-3 overflow-x-auto scrollbar-hide">
+            <CopyButton text={paste.content} label="Copy" className="flex-shrink-0 h-10" />
+            <CopyButton text={`/p/${id}`} label="Link" className="flex-shrink-0 h-10" />
+            <Link href={`/p/${id}/raw`} className="flex-shrink-0">
+              <span className="inline-flex items-center justify-center h-10 px-3 text-sm font-medium rounded-md border border-input bg-background active:bg-accent transition-colors">
+                Raw
+              </span>
+            </Link>
+            <GoToPasteInput className="flex-shrink-0" />
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
         {/* Paste Code Banner */}
-        <div className="mb-6 p-4 rounded-xl bg-muted/50 border border-border/50 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">Paste Code:</span>
-            <code className="text-2xl font-bold font-mono tracking-wider text-foreground">
+        <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl bg-muted/50 border border-border/50 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="text-xs sm:text-sm text-muted-foreground">Code:</span>
+            <code className="text-xl sm:text-2xl font-bold font-mono tracking-wider text-foreground">
               {id}
             </code>
           </div>
-          <CopyButton text={id} label="Copy Code" />
+          <CopyButton text={id} label="Copy" className="h-9 sm:h-auto" />
         </div>
 
         {/* Metadata */}
-        <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-xs font-medium">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap justify-between gap-2 sm:gap-4 mb-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-muted text-xs font-medium">
               {paste.language || "plaintext"}
             </span>
-            <span>
-              Created {new Date(paste.created_at).toLocaleDateString("en-US", {
+            <span className="hidden xs:inline">
+              {new Date(paste.created_at).toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "short",
                 day: "numeric",
@@ -94,20 +116,23 @@ export default async function PastePage({ params }: PastePageProps) {
                 minute: "2-digit",
               })}
             </span>
+            <span className="xs:hidden">
+              {new Date(paste.created_at).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
             {paste.expires_at && (
-              <span className="text-amber-600">
-                Expires {new Date(paste.expires_at).toLocaleDateString("en-US", {
-                  year: "numeric",
+              <span className="text-amber-600 text-xs">
+                Exp: {new Date(paste.expires_at).toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
                 })}
               </span>
             )}
           </div>
-          <div className="text-sm text-muted-foreground">
-            {paste.content.length.toLocaleString()} characters • {paste.content.split("\n").length} lines
+          <div className="text-xs sm:text-sm text-muted-foreground">
+            {paste.content.length.toLocaleString()} chars • {paste.content.split("\n").length} lines
           </div>
         </div>
 

@@ -207,20 +207,21 @@ export default function CodeEditor() {
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="border-b border-border/40 backdrop-blur-sm bg-background/80 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+        <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8">
+          {/* Main header row */}
+          <div className="flex justify-between items-center h-14 sm:h-16">
             {/* Logo */}
             <a href="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg bg-rose-500 flex items-center justify-center group-hover:scale-105 group-hover:bg-rose-600 transition-all">
-                <span className="text-white font-bold text-sm">❤</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-rose-500 flex items-center justify-center group-hover:scale-105 group-hover:bg-rose-600 transition-all">
+                <span className="text-white font-bold text-xs sm:text-sm">❤</span>
               </div>
-              <span className="text-xl font-bold tracking-tight">LovePaste</span>
+              <span className="text-lg sm:text-xl font-bold tracking-tight">LovePaste</span>
             </a>
 
-            {/* Controls */}
-            <div className="flex items-center gap-3">
+            {/* Desktop Controls */}
+            <div className="hidden sm:flex items-center gap-3">
               {/* Go to paste input */}
-              <div className="relative hidden sm:flex items-center">
+              <div className="relative flex items-center">
                 <input
                   type="text"
                   value={goToCode}
@@ -308,33 +309,124 @@ export default function CodeEditor() {
                 )}
               </Button>
             </div>
+
+            {/* Mobile Publish Button */}
+            <div className="flex sm:hidden items-center">
+              <Button
+                onClick={handlePublish}
+                disabled={loading || !content.trim()}
+                className="h-10 px-4 font-medium transition-all duration-200 active:scale-[0.98] bg-rose-500 hover:bg-rose-600 text-white"
+              >
+                {loading ? (
+                  <svg
+                    className="animate-spin h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                ) : (
+                  "Share"
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Mobile Controls Row */}
+          <div className="flex sm:hidden items-center gap-2 pb-3 overflow-x-auto scrollbar-hide">
+            {/* Language Select */}
+            <Select value={language} onValueChange={(val) => {
+              setLanguage(val);
+              setAutoDetect(false);
+            }}>
+              <SelectTrigger className="w-[120px] h-10 text-sm flex-shrink-0">
+                <SelectValue placeholder="Language" />
+              </SelectTrigger>
+              <SelectContent>
+                {LANGUAGES.map((lang) => (
+                  <SelectItem key={lang.value} value={lang.value}>
+                    {lang.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Expiration Select */}
+            <Select value={expiration} onValueChange={setExpiration}>
+              <SelectTrigger className="w-[100px] h-10 text-sm flex-shrink-0">
+                <SelectValue placeholder="Expires" />
+              </SelectTrigger>
+              <SelectContent>
+                {EXPIRATIONS.map((exp) => (
+                  <SelectItem key={exp.value} value={exp.value}>
+                    {exp.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Go to paste input */}
+            <div className="relative flex items-center flex-shrink-0">
+              <input
+                type="text"
+                value={goToCode}
+                onChange={(e) => setGoToCode(e.target.value.toLowerCase())}
+                onKeyDown={(e) => e.key === "Enter" && handleGoToPaste()}
+                placeholder="Code..."
+                maxLength={5}
+                className="w-20 h-10 px-2 pr-7 text-sm bg-[#1a1a1a] border border-border/30 rounded-md 
+                           placeholder:text-muted-foreground/40 focus:outline-none focus:border-rose-500/50
+                           transition-colors font-mono"
+              />
+              <button
+                onClick={handleGoToPaste}
+                disabled={!goToCode.trim()}
+                className="absolute right-2 text-muted-foreground hover:text-rose-400 disabled:opacity-30 transition-colors p-1"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Editor */}
-      <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
         <div className="flex-1 flex flex-col min-h-0">
           <Textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Paste your code or text here..."
-            className="flex-1 min-h-[calc(100vh-250px)] resize-none text-sm leading-relaxed p-6 
+            className="flex-1 min-h-[calc(100vh-200px)] sm:min-h-[calc(100vh-250px)] resize-none text-sm leading-relaxed p-4 sm:p-6 
                        bg-[#1a1a1a] border-2 border-border/30 rounded-xl
                        focus:ring-2 focus:ring-ring/20 focus:border-border
                        placeholder:text-muted-foreground/40
-                       transition-all duration-200"
+                       transition-all duration-200 scroll-touch"
             style={{ fontFamily: "var(--font-jetbrains-mono), 'JetBrains Mono', ui-monospace, monospace" }}
             spellCheck={false}
           />
         </div>
 
         {/* Footer hint */}
-        <div className="mt-4 flex justify-between items-center text-sm text-muted-foreground">
+        <div className="mt-3 sm:mt-4 flex justify-between items-center text-xs sm:text-sm text-muted-foreground">
           <span>
             {content.length > 0 && (
               <>
-                {content.length.toLocaleString()} characters • {content.split("\n").length} lines
+                {content.length.toLocaleString()} chars • {content.split("\n").length} lines
               </>
             )}
           </span>
