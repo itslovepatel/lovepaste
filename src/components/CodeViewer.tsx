@@ -61,35 +61,8 @@ export default function CodeViewer({
 
   return (
     <div className="flex flex-col">
-      {/* Code Block */}
-      <div className="rounded-xl overflow-hidden border-2 border-border/30 bg-[#1a1a1a] overflow-x-auto scroll-touch">
-        <SyntaxHighlighter
-          language={language === "plaintext" ? "text" : language}
-          style={isDark ? oneDark : oneLight}
-          showLineNumbers={showLineNumbers && !isMobile}
-          customStyle={{
-            margin: 0,
-            padding: isMobile ? "1rem" : "1.5rem",
-            fontSize: isMobile ? "12px" : "14px",
-            lineHeight: "1.7",
-            background: "transparent",
-            fontFamily: "var(--font-jetbrains-mono), 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
-          }}
-          lineNumberStyle={{
-            minWidth: "2.5em",
-            paddingRight: "0.75em",
-            color: "#666",
-            opacity: 0.6,
-          }}
-          wrapLines
-          wrapLongLines
-        >
-          {code}
-        </SyntaxHighlighter>
-      </div>
-
-      {/* Copy Button Below Code Block */}
-      <div className="mt-3 flex justify-end">
+      {/* Copy Button Above Code Block */}
+      <div className="mb-3 flex justify-end">
         <button
           onClick={handleCopy}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200
@@ -115,6 +88,33 @@ export default function CodeViewer({
             </span>
           )}
         </button>
+      </div>
+
+      {/* Code Block */}
+      <div className="rounded-xl overflow-hidden border-2 border-border/30 bg-[#1a1a1a] overflow-x-auto scroll-touch">
+        <SyntaxHighlighter
+          language={language === "plaintext" ? "text" : language}
+          style={isDark ? oneDark : oneLight}
+          showLineNumbers={showLineNumbers && !isMobile}
+          customStyle={{
+            margin: 0,
+            padding: isMobile ? "1rem" : "1.5rem",
+            fontSize: isMobile ? "12px" : "14px",
+            lineHeight: "1.7",
+            background: "transparent",
+            fontFamily: "var(--font-jetbrains-mono), 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
+          }}
+          lineNumberStyle={{
+            minWidth: "2.5em",
+            paddingRight: "0.75em",
+            color: "#666",
+            opacity: 0.6,
+          }}
+          wrapLines
+          wrapLongLines
+        >
+          {code}
+        </SyntaxHighlighter>
       </div>
     </div>
   );
